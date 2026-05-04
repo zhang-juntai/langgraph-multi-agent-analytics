@@ -1,0 +1,256 @@
+# MCP Chart Server Configuration
+
+name: mcp-chart
+version: 1.0.0
+description: 图表生成 MCP 服务器
+
+server:
+  host: localhost
+  port: 8002
+  transport: stdio
+
+# 全局配置
+config:
+  default_figure_size: [10, 6]
+  dpi: 100
+  font_family: "SimHei"
+  fallback_font: "DejaVu Sans"
+  unicode_minus: false
+
+tools:
+  - name: bar_plot
+    description: 生成条形图，支持水平/垂直方向
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: x
+        type: string
+        required: true
+        description: X 轴列名
+      - name: y
+        type: string
+        required: false
+        description: Y 轴列名（可选，默认计数）
+      - name: orientation
+        type: string
+        default: "vertical"
+        enum: [vertical, horizontal]
+      - name: color
+        type: string
+        default: "steelblue"
+      - name: title
+        type: string
+        default: null
+      - name: show_values
+        type: boolean
+        default: true
+        description: 在条形上显示数值
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+        description: 保存的图表路径
+      - name: figure_base64
+        type: string
+        description: Base64 编码的图表
+
+  - name: line_plot
+    description: 生成折线图，支持多系列
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: x
+        type: string
+        required: true
+      - name: y
+        type: string
+        required: true
+      - name: hue
+        type: string
+        default: null
+        description: 分组列名
+      - name: style
+        type: string
+        default: null
+      - name: markers
+        type: boolean
+        default: true
+      - name: title
+        type: string
+        default: null
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+  - name: scatter_plot
+    description: 生成散点图，支持颜色和大小映射
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: x
+        type: string
+        required: true
+      - name: y
+        type: string
+        required: true
+      - name: hue
+        type: string
+        default: null
+      - name: size
+        type: string
+        default: null
+      - name: alpha
+        type: number
+        default: 0.6
+      - name: title
+        type: string
+        default: null
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+  - name: histogram
+    description: 生成直方图
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: column
+        type: string
+        required: true
+      - name: bins
+        type: integer
+        default: 30
+      - name: kde
+        type: boolean
+        default: true
+        description: 是否显示核密度估计
+      - name: title
+        type: string
+        default: null
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+  - name: boxplot
+    description: 生成箱线图，用于异常值检测
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: columns
+        type: array
+        required: true
+        description: 要绘制的列名列表
+      - name: by
+        type: string
+        default: null
+        description: 分组列名
+      - name: title
+        type: string
+        default: "箱线图 (异常值检测)"
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+  - name: heatmap
+    description: 生成热力图，主要用于相关性矩阵
+    parameters:
+      - name: matrix
+        type: array
+        required: true
+        description: 2D 数组或矩阵
+      - name: labels
+        type: array
+        required: true
+        description: 行/列标签
+      - name: annot
+        type: boolean
+        default: true
+        description: 是否显示数值标注
+      - name: cmap
+        type: string
+        default: "RdBu_r"
+      - name: center
+        type: number
+        default: 0
+      - name: title
+        type: string
+        default: "热力图"
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+  - name: pie_chart
+    description: 生成饼图
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: column
+        type: string
+        required: true
+      - name: top_n
+        type: integer
+        default: 10
+        description: 显示前 N 个类别，其余归为"其他"
+      - name: show_pct
+        type: boolean
+        default: true
+      - name: title
+        type: string
+        default: null
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+  - name: subplots
+    description: 生成多子图组合
+    parameters:
+      - name: plots
+        type: array
+        required: true
+        description: 子图配置列表
+        items:
+          - type
+          - column
+          - params
+      - name: ncols
+        type: integer
+        default: 2
+      - name: figsize
+        type: array
+        default: [14, 8]
+      - name: title
+        type: string
+        default: null
+    returns:
+      - name: success
+        type: boolean
+      - name: figure_path
+        type: string
+
+# 图表保存配置
+output:
+  directory: "./outputs/figures"
+  format: "png"
+  save_base64: true
+
+logging:
+  level: INFO

@@ -1,0 +1,165 @@
+# MCP Data Server Configuration
+
+name: mcp-data
+version: 1.0.0
+description: 数据加载与处理 MCP 服务器
+
+# 服务器配置
+server:
+  host: localhost
+  port: 8001
+  transport: stdio  # stdio | http | websocket
+
+# 工具定义
+tools:
+  - name: load_csv
+    description: |
+      加载 CSV 文件，自动处理编码问题（包括 BOM）。
+      支持多种编码格式，优先使用 utf-8-sig。
+    parameters:
+      - name: file_path
+        type: string
+        required: true
+        description: CSV 文件路径
+      - name: encoding
+        type: string
+        default: "utf-8-sig"
+        description: 文件编码，默认自动处理 BOM
+      - name: delimiter
+        type: string
+        default: ","
+        description: 分隔符
+      - name: skip_rows
+        type: integer
+        default: 0
+        description: 跳过的行数
+    returns:
+      - name: success
+        type: boolean
+      - name: dataframe_info
+        type: object
+        fields:
+          - row_count
+          - column_count
+          - columns
+          - dtypes
+      - name: preview
+        type: array
+        description: 前 5 行数据预览
+      - name: error
+        type: string
+        optional: true
+
+  - name: load_excel
+    description: 加载 Excel 文件，支持多 sheet
+    parameters:
+      - name: file_path
+        type: string
+        required: true
+      - name: sheet_name
+        type: string
+        default: null
+        description: Sheet 名称，为空时读取第一个
+    returns:
+      - name: success
+        type: boolean
+      - name: dataframe_info
+        type: object
+      - name: sheet_names
+        type: array
+        description: 所有 sheet 名称列表
+
+  - name: load_json
+    description: 加载 JSON 文件
+    parameters:
+      - name: file_path
+        type: string
+        required: true
+      - name: orient
+        type: string
+        default: "records"
+        description: JSON 格式方向
+    returns:
+      - name: success
+        type: boolean
+      - name: dataframe_info
+        type: object
+
+  - name: validate_data
+    description: |
+      验证数据质量，检查常见问题：
+      - 空值统计
+      - 重复行
+      - 数据类型一致性
+      - 异常值标记
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+        description: 数据集标识符
+    returns:
+      - name: is_valid
+        type: boolean
+      - name: issues
+        type: array
+        items:
+          - type
+          - column
+          - count
+          - suggestion
+      - name: quality_score
+        type: number
+        description: 0-100 的数据质量评分
+
+  - name: get_metadata
+    description: 获取数据集详细元信息
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+    returns:
+      - name: metadata
+        type: object
+        fields:
+          - row_count
+          - column_count
+          - memory_usage
+          - columns:
+              - name
+              - dtype
+              - null_count
+              - null_pct
+              - unique_count
+              - sample_values
+
+  - name: clean_column_names
+    description: |
+      清理列名：
+      - 移除 BOM 字符
+      - 统一大小写
+      - 移除特殊字符
+    parameters:
+      - name: dataset_id
+        type: string
+        required: true
+      - name: case
+        type: string
+        default: "snake"
+        enum: [snake, camel, lower, upper]
+    returns:
+      - name: success
+        type: boolean
+      - name: old_names
+        type: array
+      - name: new_names
+        type: array
+
+# 健康检查
+health_check:
+  interval_seconds: 30
+  timeout_seconds: 5
+
+# 日志配置
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

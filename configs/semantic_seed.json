@@ -1,0 +1,155 @@
+{
+  "metrics": [
+    {
+      "semantic_id": "metric.sales.net_sales",
+      "name": "net_sales",
+      "display_name": "Net Sales",
+      "business_domain": "sales",
+      "definition_scope": "organization",
+      "status": "published",
+      "current_version": "v1",
+      "business_owner": "Sales Operations",
+      "technical_owner": "Data Platform",
+      "risk_level": "medium",
+      "versions": [
+        {
+          "version": "v1",
+          "definition": "Paid sales amount minus refunded and cancelled order amount.",
+          "default_calendar": "company_business_week",
+          "default_time_field": "order_date",
+          "default_source_alias": "sales_dw",
+          "default_schema": "mart",
+          "visibility_roles": ["sales_reader", "sales_admin", "admin"],
+          "sql_templates": {
+            "sqlite": "SELECT SUM(net_amount) AS net_sales FROM mart.sales_orders WHERE order_date >= '{start_date}' AND order_date < '{end_date}'",
+            "generic": "SELECT SUM(net_amount) AS net_sales FROM mart.sales_orders WHERE order_date >= '{start_date}' AND order_date < '{end_date}'"
+          },
+          "created_by": "seed",
+          "approved_by": "seed",
+          "published_at": "seed"
+        }
+      ],
+      "synonyms": ["\u9500\u552e\u603b\u989d", "\u51c0\u9500\u552e\u989d", "\u9500\u552e\u989d", "sales total", "net sales"]
+    },
+    {
+      "semantic_id": "metric.sales.gmv",
+      "name": "gmv",
+      "display_name": "GMV",
+      "business_domain": "sales",
+      "definition_scope": "organization",
+      "status": "published",
+      "current_version": "v1",
+      "business_owner": "Sales Operations",
+      "technical_owner": "Data Platform",
+      "risk_level": "medium",
+      "versions": [
+        {
+          "version": "v1",
+          "definition": "Gross paid order amount before refunds and cancellations.",
+          "default_calendar": "company_business_week",
+          "default_time_field": "order_date",
+          "default_source_alias": "sales_dw",
+          "default_schema": "mart",
+          "visibility_roles": ["sales_reader", "sales_admin", "admin"],
+          "sql_templates": {
+            "sqlite": "SELECT SUM(gross_amount) AS gmv FROM mart.sales_orders WHERE order_date >= '{start_date}' AND order_date < '{end_date}'",
+            "generic": "SELECT SUM(gross_amount) AS gmv FROM mart.sales_orders WHERE order_date >= '{start_date}' AND order_date < '{end_date}'"
+          },
+          "created_by": "seed",
+          "approved_by": "seed",
+          "published_at": "seed"
+        }
+      ],
+      "synonyms": ["GMV", "\u6210\u4ea4\u989d", "\u9500\u552e\u603b\u989d", "sales total"]
+    }
+  ],
+  "defaults": [
+    {
+      "scope_type": "domain",
+      "scope_id": "sales",
+      "business_domain": "sales",
+      "metric_term": "\u9500\u552e\u603b\u989d",
+      "semantic_id": "metric.sales.net_sales",
+      "version": "v1",
+      "high_risk_allowed": false
+    },
+    {
+      "scope_type": "domain",
+      "scope_id": "sales",
+      "business_domain": "sales",
+      "metric_term": "sales total",
+      "semantic_id": "metric.sales.net_sales",
+      "version": "v1",
+      "high_risk_allowed": false
+    }
+  ],
+  "role_permissions": [
+    {"role": "sales_reader", "resource_type": "domain", "resource_id": "sales", "action": "metric.view"},
+    {"role": "sales_admin", "resource_type": "domain", "resource_id": "sales", "action": "metric.draft"},
+    {"role": "sales_admin", "resource_type": "domain", "resource_id": "sales", "action": "metric.view"},
+    {"role": "sales_admin", "resource_type": "domain", "resource_id": "sales", "action": "metric.request_publish"},
+    {"role": "business_owner", "resource_type": "domain", "resource_id": "sales", "action": "metric.approve_business"},
+    {"role": "data_steward", "resource_type": "domain", "resource_id": "sales", "action": "metric.approve_technical"},
+    {"role": "admin", "resource_type": "*", "resource_id": "*", "action": "*"}
+  ],
+  "access_policies": [
+    {
+      "policy_id": "policy.sales_reader.sales_region_scope",
+      "role": "sales_reader",
+      "business_domain": "sales",
+      "semantic_id": "*",
+      "row_filter_sql": "region IN ('north', 'east')",
+      "denied_columns": ["customer_phone", "customer_email"],
+      "status": "active"
+    },
+    {
+      "policy_id": "policy.sales_admin.all_sales",
+      "role": "sales_admin",
+      "business_domain": "sales",
+      "semantic_id": "*",
+      "row_filter_sql": "",
+      "denied_columns": [],
+      "status": "active"
+    }
+  ],
+  "catalog": {
+    "data_sources": [
+      {
+        "source_alias": "sales_dw",
+        "dialect": "sqlite",
+        "business_domain": "sales",
+        "owner": "Data Platform",
+        "status": "active"
+      }
+    ],
+    "tables": [
+      {
+        "table_id": "table.sales_dw.mart.sales_orders",
+        "source_alias": "sales_dw",
+        "schema_name": "mart",
+        "table_name": "sales_orders",
+        "business_domain": "sales",
+        "description": "Governed sales order fact table.",
+        "owner": "Data Platform",
+        "status": "active",
+        "sensitivity_level": "internal",
+        "columns": [
+          {"column_name": "net_amount", "data_type": "decimal", "business_name": "Net amount", "description": "Paid amount after refunds and cancellations.", "is_sensitive": false, "sensitivity_level": "internal", "tags": ["metric_input"], "status": "active"},
+          {"column_name": "gross_amount", "data_type": "decimal", "business_name": "Gross amount", "description": "Paid amount before refunds and cancellations.", "is_sensitive": false, "sensitivity_level": "internal", "tags": ["metric_input"], "status": "active"},
+          {"column_name": "order_date", "data_type": "date", "business_name": "Order date", "description": "Business order date.", "is_sensitive": false, "sensitivity_level": "internal", "tags": ["time"], "status": "active"},
+          {"column_name": "region", "data_type": "text", "business_name": "Region", "description": "Sales region.", "is_sensitive": false, "sensitivity_level": "internal", "tags": ["dimension", "policy_filter"], "status": "active"},
+          {"column_name": "customer_phone", "data_type": "text", "business_name": "Customer phone", "description": "Customer phone number.", "is_sensitive": true, "sensitivity_level": "restricted", "tags": ["pii"], "status": "active"},
+          {"column_name": "customer_email", "data_type": "text", "business_name": "Customer email", "description": "Customer email address.", "is_sensitive": true, "sensitivity_level": "restricted", "tags": ["pii"], "status": "active"}
+        ]
+      }
+    ],
+    "relationships": []
+  },
+  "users": [
+    {"user_id": "demo_sales", "display_name": "Demo Sales User", "team": "sales", "roles": ["sales_reader"]},
+    {"user_id": "demo_sales_admin", "display_name": "Demo Sales Admin", "team": "sales", "roles": ["sales_admin"]},
+    {"user_id": "demo_business_owner", "display_name": "Demo Business Owner", "team": "sales", "roles": ["business_owner"]},
+    {"user_id": "demo_data_steward", "display_name": "Demo Data Steward", "team": "data", "roles": ["data_steward"]},
+    {"user_id": "demo_admin", "display_name": "Demo Admin", "team": "platform", "roles": ["admin"]}
+  ]
+}
